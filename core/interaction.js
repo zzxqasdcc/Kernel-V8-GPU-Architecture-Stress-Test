@@ -1,69 +1,48 @@
-import { Engine } from './engine.js'; 
+import { vsSource } from '../shaders/main.vert.js';
+import { fsSource } from '../shaders/mandelbulb.frag.js';
 
-const canvas = document.getElementById('c');
-const engine = new Engine(canvas);
+export class Engine {
+    constructor(canvas) {
+        this.gl = canvas.getContext('webgl');
+        this.prog = this.gl.createProgram();
+        this.init();
+    }
 
-let heavy = false, q = 2, zoom = 4.0, tZoom = 4.0, rotX = 0.5, rotY = 0.5, tRotX = 0.5, tRotY = 0.5;
-let moving = false, lx, ly, lDist = 0, isBench = false, bStart = 0, bDur = 20, fpsData = [];
+    init() {
+        const createSh = (t, s) => {
+            const sh = this.gl.createShader(t);
+            this.gl.shaderSource(sh, s);
+            this.gl.compileShader(sh);
+            return sh;
+        };
+        this.gl.attachShader(this.prog, createSh(this.gl.VERTEX_SHADER, vsSource));
+        this.gl.attachShader(this.prog, createSh(this.gl.FRAGMENT_SHADER, fsSource));
+        this.gl.linkProgram(this.prog);
+        this.gl.useProgram(this.prog);
+        
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.gl.createBuffer());
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), this.gl.STATIC_DRAW);
+        const pLoc = this.gl.getAttribLocation(this.prog, 'pos');
+        this.gl.enableVertexAttribArray(pLoc);
+        this.gl.vertexAttribPointer(pLoc, 2, this.gl.FLOAT, false, 0, 0);
 
-window.setMode = (m) => { heavy = m; updateUI(); };
-window.runBenchmark = () => {
-    isBench = true; bStart = performance.now(); fpsData = [];
-    const btn = document.getElementById('bench-trigger');
-    btn.innerText = "TESTING..."; btn.classList.add('running');
-};
+        this.locs = {
+            t: this.gl.getUniformLocation(this.prog, 'u_time'),
+            r: this.gl.getUniformLocation(this.prog, 'u_res'),
+            z: this.gl.getUniformLocation(this.prog, 'u_zoom'),
+            m: this.gl.getUniformLocation(this.prog, 'u_rot'),
+            h: this.gl.getUniformLocation(this.prog, 'u_heavy'),
+            q: this.gl.getUniformLocation(this.prog, 'u_q')
+        };
+    }
 
-function updateUI() {
-    document.getElementById('m-std').className = !heavy ? 'active' : '';
-    document.getElementById('m-pwr').className = heavy ? 'active' : '';
-    const qs = ["Linear", "Sparse", "Dense", "Turbo", "Deep", "Atomic"];
-    document.getElementById('q-grid').innerHTML = qs.map((l, i) => 
-        `<button class="${i===q?'active':''}" onclick="updateQ(${i})">${l}</button>`).join('');
-    resize();
+    render(d) {
+        this.gl.uniformMatrix3fv(this.locs.m, false, d.rotMat);
+        this.gl.uniform1f(this.locs.t, d.time);
+        this.gl.uniform2f(this.locs.r, d.width, d.height);
+        this.gl.uniform1f(this.locs.z, d.zoom);
+        this.gl.uniform1i(this.locs.h, d.heavy);
+        this.gl.uniform1i(this.locs.q, d.q);
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+    }
 }
-window.updateUI = updateUI;
-window.updateQ = (newQ) => { q = newQ; updateUI(); };
-
-function resize() {
-    const dpr = window.devicePixelRatio || 1;
-    const ss = (heavy ? [0.6, 0.8, 1.0, 1.2, 1.5, 1.8] : [0.4, 0.6, 0.8, 1.0, 1.2, 1.5])[q];
-    canvas.width = window.innerWidth * dpr * ss; canvas.height = window.innerHeight * dpr * ss;
-    engine.gl.viewport(0, 0, canvas.width, canvas.height);
-}
-
-const start = e => { moving = true; const t = e.touches ? e.touches[0] : e; lx = t.clientX; ly = t.clientY; };
-const move = e => { 
-    if(!moving || isBench) return; 
-    const t = e.touches ? e.touches[0] : e;
-    tRotY-=(t.clientX-lx)*0.005; tRotX-=(t.clientY-ly)*0.005; lx=t.clientX; ly=t.clientY; 
-};
-canvas.addEventListener('mousedown', start); window.addEventListener('mousemove', move); window.addEventListener('mouseup', ()=>moving=false);
-window.addEventListener('resize', resize);
-
-let lt = 0, f = 0;
-function frame(now) {
-    f++; if(now - lt >= 1000) { document.getElementById('fps').innerText = f + " FPS"; if(isBench) fpsData.push(f); f = 0; lt = now; }
-    if(isBench) {
-        const el = (now-bStart)/1000;
-        document.getElementById('bench-progress').style.width = (el/bDur)*100+'%';
-        tRotY += 0.04; tRotX = 0.5 + Math.sin(el*0.5)*0.4; tZoom = 3.5 + Math.sin(el*0.8)*2.0;
-        if(el>=bDur) {
-            isBench = false;
-            const avg = (fpsData.reduce((a, b) => a + b, 0) / fpsData.length).toFixed(1);
-            alert(`STRESS TEST RESULT: ${avg} FPS`);
-            document.getElementById('bench-trigger').innerText = "EXECUTE STRESS TEST";
-            document.getElementById('bench-trigger').classList.remove('running');
-        }
-    } else if(!moving) tRotY += 0.003;
-    rotX+=(tRotX-rotX)*0.1; rotY+=(tRotY-rotY)*0.1; zoom+=(tZoom-zoom)*0.1;
-    const cx=Math.cos(rotX), sx=Math.sin(rotX), cy=Math.cos(rotY), sy=Math.sin(rotY);
-    engine.render({
-        rotMat: new Float32Array([cy, sx*sy, cx*sy, 0, cx, -sx, -sy, sx*cy, cx*cy]),
-        time: now * 0.001, width: canvas.width, height: canvas.height, zoom: zoom, heavy: heavy, q: q
-    });
-    requestAnimationFrame(frame);
-}
-
-const ext = engine.gl.getExtension('WEBGL_debug_renderer_info');
-if(ext) document.getElementById('gpu-id').innerText = engine.gl.getParameter(ext.UNMASKED_RENDERER_WEBGL).split(' / ')[0];
-updateUI(); requestAnimationFrame(frame);
