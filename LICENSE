@@ -1,3 +1,14 @@
+_  __                     _       __   __  ___  
+ | |/ /___ _ __ _ __   ___ | |      \ \ / / ( _ ) 
+ | ' // _ \ '__| '_ \ / _ \| |  _____ \ V /  / _ \ 
+ | . \  __/ |  | | | |  __/| | |_____| \ /  | (_) |
+ |_|\_\___|_|  |_| |_|\___||_|          V    \___/ 
+
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  KERNEL-V8 : GPU ARCHITECTURE STRESS TEST & BENCHMARK SUITE
+  Copyright (c) 2026 SunJunhe (zzxqasdcc)
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 MIT License
 
 Copyright (c) 2026 zzxqasdcc
@@ -19,3 +30,10 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ [ PROJECT  ] : Kernel-V8
+ [ ENGINE   ] : WebGL2 / GLSL Raymarching
+ [ VERSION  ] : v1.0.0 Stable Release
+ [ MOTTO    ] : Burn the silicon, verify the code.
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
