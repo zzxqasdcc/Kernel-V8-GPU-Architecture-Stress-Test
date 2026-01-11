@@ -13,13 +13,16 @@ export class Engine {
             const sh = this.gl.createShader(t);
             this.gl.shaderSource(sh, s);
             this.gl.compileShader(sh);
+            if (!this.gl.getShaderParameter(sh, this.gl.COMPILE_STATUS)) {
+                console.error(this.gl.getShaderInfoLog(sh));
+            }
             return sh;
         };
         this.gl.attachShader(this.prog, createSh(this.gl.VERTEX_SHADER, vsSource));
         this.gl.attachShader(this.prog, createSh(this.gl.FRAGMENT_SHADER, fsSource));
         this.gl.linkProgram(this.prog);
         this.gl.useProgram(this.prog);
-        
+
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.gl.createBuffer());
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), this.gl.STATIC_DRAW);
         const pLoc = this.gl.getAttribLocation(this.prog, 'pos');
